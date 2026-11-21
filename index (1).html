@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>학생용 / 교사용 모드 선택</title>
+    <style>
+      :root {
+        --bg: #edf6ff;
+        --panel: #ffffff;
+        --line: #dfeaf7;
+        --text: #1f2d3d;
+        --muted: #5d7186;
+        --student: #2d7ff9;
+        --student-dark: #1a5fe0;
+        --teacher: #ff9d3d;
+        --teacher-dark: #ea7d1a;
+        --shadow: 0 16px 36px rgba(44, 84, 137, 0.12);
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        padding: 28px 16px;
+        font-family: "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+        background: linear-gradient(180deg, #edf6ff 0%, #f8fbff 100%);
+        color: var(--text);
+      }
+      .wrap {
+        max-width: 980px;
+        margin: 0 auto;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        box-shadow: var(--shadow);
+        padding: 26px 20px 30px;
+      }
+      h1 {
+        margin: 0 0 10px;
+        text-align: center;
+        font-size: clamp(2rem, 4vw, 2.8rem);
+        color: #1d4d8f;
+      }
+      .subtitle {
+        margin: 0 auto 28px;
+        max-width: 720px;
+        text-align: center;
+        line-height: 1.6;
+        color: var(--muted);
+      }
+      .mode-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 18px;
+      }
+      .mode-card {
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 22px 18px;
+        background: #fbfdff;
+      }
+      .mode-card.student {
+        border-color: rgba(45, 127, 249, 0.2);
+        background: linear-gradient(180deg, #f4f9ff 0%, #ffffff 100%);
+      }
+      .mode-card.teacher {
+        border-color: rgba(255, 157, 61, 0.28);
+        background: linear-gradient(180deg, #fffaf3 0%, #ffffff 100%);
+      }
+      .badge {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        margin-bottom: 10px;
+      }
+      .student-badge {
+        background: #e7f1ff;
+        color: var(--student-dark);
+      }
+      .teacher-badge {
+        background: #fff1df;
+        color: var(--teacher-dark);
+      }
+      h2 {
+        margin: 0 0 10px;
+        font-size: 1.5rem;
+      }
+      .mode-card p {
+        margin: 0 0 18px;
+        line-height: 1.6;
+        color: var(--muted);
+      }
+      .link-btn {
+        display: inline-block;
+        text-decoration: none;
+        color: white;
+        border-radius: 14px;
+        padding: 12px 18px;
+        font-weight: 800;
+        transition: transform 0.15s ease;
+      }
+      .link-btn:hover { transform: translateY(-1px); }
+      .student-btn {
+        background: linear-gradient(135deg, var(--student) 0%, var(--student-dark) 100%);
+      }
+      .teacher-btn {
+        background: linear-gradient(135deg, var(--teacher) 0%, var(--teacher-dark) 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="panel">
+        <h1>학생용 / 교사용 포즈 모드 선택</h1>
+        <p class="subtitle">
+          학생과 교사는 서로 다른 용도로 사용됩니다.<br />
+          학생은 단일 사진 판별, 교사는 여러 사진 평가를 수행합니다.<br />
+          현재 모델은 Teachable Machine Pose 기반으로 동작합니다.
+        </p>
+
+        <div class="mode-grid">
+          <div class="mode-card student">
+            <div class="badge student-badge">학생용</div>
+            <h2>스쿼트 자세 판별</h2>
+            <p>
+              한 장의 사진을 올리거나 카메라로 촬영해 자세를 판별합니다.<br />
+              즉시 결과와 교정 피드백을 확인할 수 있습니다.
+            </p>
+            <a class="link-btn student-btn" href="./student.html">학생용 화면 열기</a>
+          </div>
+
+          <div class="mode-card teacher">
+            <div class="badge teacher-badge">교사용</div>
+            <h2>포즈 평가 대시보드</h2>
+            <p>
+              여러 장의 이미지를 한 번에 선택해 혼동행렬, 정분류율, 오분류 사진, CSV를 확인합니다.
+            </p>
+            <a class="link-btn teacher-btn" href="./eval.html">교사용 화면 열기</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
