@@ -1,1 +1,0 @@
-# squat-discriminator_v1
