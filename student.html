@@ -327,7 +327,7 @@
       <header class="header">
         <h1>학생용 스쿼트 자세 판별기</h1>
         <p class="subtitle">
-          자신의 스쿼트 사진을 넣어 자세가 올바른지 혹은 잘못된 부분이 있는지 판별해요.
+          스쿼트 사진을 올리면 AI가 올바른 스쿼트인지 잘못된 스쿼트인지 살펴봐요.
         </p>
         <a class="mode-link" href="./index.html">← 모드 선택으로 돌아가기</a>
       </header>
@@ -384,7 +384,7 @@
               <strong>교정 피드백</strong>
               <span id="feedbackText"></span>
             </div>
-            <div class="notice">AI의 분석 결과는 실제 자세와 다를 수 있어요.</div>
+            <div class="notice">AI의 분석 결과는 실제 자세와 다를 수 있어요. 선생님의 확인을 꼭 받아 주세요.</div>
           </div>
         </div>
       </div>
@@ -432,46 +432,11 @@
           .replace(/[^a-z0-9가-힣]+/g, '');
       }
 
-      function classifyLabel(rawLabel, knownLabels = []) {
+      // 초기 Teachable Machine 모델: 올바른 스쿼트 / 잘못된 스쿼트 (2개 클래스)
+      function classifyLabel(rawLabel) {
         const label = normalizeLabel(rawLabel);
-        const known = knownLabels.map(normalizeLabel);
-
-        if (!label && known.length === 0) return 'unknown';
-
-        if (
-          label.includes('올바른') ||
-          label.includes('correct') ||
-          label.includes('good') ||
-          label.includes('정상') ||
-          label.includes('좋음') ||
-          label.includes('normal')
-        ) return 'correct';
-
-        if (
-          label.includes('허리') && label.includes('말림') ||
-          label.includes('backbend') ||
-          label.includes('허리말림') ||
-          label.includes('back') ||
-          label.includes('bend')
-        ) return 'bad_back';
-
-        if (
-          label.includes('무릎') && label.includes('모임') ||
-          label.includes('kneecollapse') ||
-          label.includes('무릎모임') ||
-          label.includes('knee') ||
-          label.includes('collapse')
-        ) return 'bad_knee';
-
-        if (
-          label.includes('벗윙크') ||
-          label.includes('buttwink') ||
-          label.includes('butt') ||
-          label.includes('wink')
-        ) return 'bad_buttwink';
-
-        // 특정 예측 클래스의 이름만으로 유형을 식별한다.
-        // 다른 클래스의 이름을 합쳐 판단하면 잘못 분류될 수 있으므로 사용하지 않는다.
+        if (label === '올바른스쿼트') return 'correct';
+        if (label === '잘못된스쿼트') return 'incorrect';
         return 'unknown';
       }
 
@@ -551,35 +516,19 @@
         }
 
         if (result.category === 'correct') {
-          resultTitle.textContent = '올바른 스쿼트 자세예요! 👍';
+          resultTitle.textContent = '올바른 스쿼트 자세일 가능성이 높아요! 👍';
           resultTitle.className = 'result-good';
-          resultDescription.textContent = '잘했어요! 지금처럼 바른 자세를 유지하며 운동해 보세요!';
+          resultDescription.textContent = '잘했어요! 지금처럼 바른 자세를 유지하며 연습해 봐요. 선생님과 함께 확인해요!';
           probabilityBadge.className = 'probability probability-good';
           probabilityBadge.textContent = `확률: ${percentageText}`;
           feedbackBox.classList.add('hidden');
-        } else if (result.category === 'bad_back') {
-          resultTitle.textContent = '허리 말림이 발견되었어요!';
+        } else if (result.category === 'incorrect') {
+          resultTitle.textContent = '잘못된 스쿼트 자세일 가능성이 높아요! ⚠️';
           resultTitle.className = 'result-bad';
-          resultDescription.textContent = '허리 말림이 발견되었어요!';
+          resultDescription.textContent = 'AI가 자세를 점검해 보라고 알려주었어요. 선생님과 함께 자세를 확인해 봐요.';
           probabilityBadge.className = 'probability probability-bad';
           probabilityBadge.textContent = `확률: ${percentageText}`;
-          feedbackText.textContent = '허리를 곧게 세우고 척추 중립을 유지해 주세요. 상체가 너무 앞으로 말리지 않도록 천천히 내려가세요.';
-          feedbackBox.classList.remove('hidden');
-        } else if (result.category === 'bad_buttwink') {
-          resultTitle.textContent = '벗윙크 자세가 발견되었어요!';
-          resultTitle.className = 'result-bad';
-          resultDescription.textContent = '엉덩이와 무릎이 너무 과하게 틀어지는 자세예요.';
-          probabilityBadge.className = 'probability probability-bad';
-          probabilityBadge.textContent = `확률: ${percentageText}`;
-          feedbackText.textContent = '엉덩이와 무릎의 각도를 안정적으로 유지하고, 허리와 골반을 정렬해 주세요.';
-          feedbackBox.classList.remove('hidden');
-        } else if (result.category === 'bad_knee') {
-          resultTitle.textContent = '무릎이 안쪽으로 모이는 자세가 발견되었어요!';
-          resultTitle.className = 'result-bad';
-          resultDescription.textContent = '무릎이 안쪽으로 모이는 자세가 발견되었어요!';
-          probabilityBadge.className = 'probability probability-bad';
-          probabilityBadge.textContent = `확률: ${percentageText}`;
-          feedbackText.textContent = '무릎이 발끝 방향을 따라가도록 하고, 무릎이 안쪽으로 모이지 않게 천천히 움직여 주세요.';
+          feedbackText.textContent = '무릎이 발끝 방향을 따라가도록 하고, 허리가 꼿꼿하게 펴지도록 신경 써 주세요. 무리하지 말고 천천히 연습해 봐요.';
           feedbackBox.classList.remove('hidden');
         } else {
           resultTitle.textContent = '잘 모르겠어요 🤔';
