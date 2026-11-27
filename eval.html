@@ -161,7 +161,8 @@
 <body>
   <div class="wrap">
     <div class="panel">
-      <h1>스쿼트 포즈 평가 도구</h1>
+      <h1>스쿼트 포즈 평가 도구 (5클래스)</h1>
+      <p style="color:var(--muted);line-height:1.6">5클래스 모델 평가 · 파일명을 <strong>올바른_옆모습_001.jpg</strong>, <strong>올바른_정면_001.jpg</strong>, <strong>잘못된_허리말림_001.jpg</strong>, <strong>잘못된_무릎모임_001.jpg</strong>, <strong>잘못된_벗윙크_001.jpg</strong>처럼 지정하면 정답과 예측을 비교합니다.</p>
 
       <div class="toolbar">
         <input id="fileInput" type="file" accept="image/*" multiple />
@@ -219,84 +220,34 @@
     let evaluationRunning = false;
     let thumbnailUrls = [];
 
-    const LABEL_MAP = {
-      good: "good",
-      correct: "good",
-      올바른: "good",
-      정상: "good",
-      정상자세: "good",
-      safe: "good",
-
-      bad_back: "bad_back",
-      backbend: "bad_back",
-      허리말림: "bad_back",
-      허리: "bad_back",
-      badback: "bad_back",
-
-      bad_knee: "bad_knee",
-      kneecollapse: "bad_knee",
-      무릎모임: "bad_knee",
-      knee: "bad_knee",
-      badknee: "bad_knee",
-
-      bad_buttwink: "bad_buttwink",
-      buttwink: "bad_buttwink",
-      벗윙크: "bad_buttwink",
-      butt: "bad_buttwink"
-    };
+    // Teachable Machine 모델: 스쿼트 자세 5개 클래스
+    const CLASS_NAMES = [
+      "올바른 스쿼트 옆모습",
+      "올바른 스쿼트 정면",
+      "잘못된 스쿼트 허리말림",
+      "잘못된 스쿼트 무릎모임",
+      "잘못된 스쿼트 벗윙크"
+    ];
 
     function normalizeLabel(value) {
-      return String(value ?? "")
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9가-힣]+/g, "");
+      return String(value ?? "").trim().toLowerCase().replace(/[^a-z0-9가-힣]+/g, "");
     }
 
     function canonicalizeLabel(value) {
-      const raw = normalizeLabel(value);
-      if (!raw) return "unknown";
-
-      const mapped = LABEL_MAP[raw];
-      if (mapped) return mapped;
-
-      const synonyms = {
-        good: "good",
-        correct: "good",
-        normal: "good",
-        okay: "good",
-        badback: "bad_back",
-        backbend: "bad_back",
-        badknee: "bad_knee",
-        kneecollapse: "bad_knee",
-        buttwink: "bad_buttwink"
-      };
-
-      return synonyms[raw] || raw;
+      const label = normalizeLabel(value);
+      if (label.includes("허리말림") || label.includes("허리굽음")) return CLASS_NAMES[2];
+      if (label.includes("무릎모임") || label.includes("무릎내반")) return CLASS_NAMES[3];
+      if (label.includes("벗윙크") || label.includes("버트윙크") || label.includes("골반말림") || label.includes("buttwink")) return CLASS_NAMES[4];
+      if (label.includes("잘못된") || label.startsWith("bad")) return "unknown";
+      if (label.includes("옆모습") || label.includes("옆면") || label.includes("측면") || label.startsWith("goodside")) return CLASS_NAMES[0];
+      if (label.includes("정면") || label.startsWith("goodfront")) return CLASS_NAMES[1];
+      return "unknown";
     }
 
+    // 정답은 파일명에 포함된 자세 유형으로 판단한다.
     function getClassFromFilename(fileName) {
-      const base = String(fileName || "").replace(/\.[^/.]+$/, "");
-      const cleaned = base.replace(/\s+/g, "_");
-      const parts = cleaned.split(/[_-]+/).filter(Boolean);
-
-      if (!parts.length) return "unknown";
-
-      const first = parts[0].toLowerCase();
-
-      if (first.includes("good") || first.includes("correct") || first.includes("normal") || first.includes("올바른")) {
-        return "good";
-      }
-      if (first.includes("back") || first.includes("bend") || first.includes("허리") || first.includes("말림")) {
-        return "bad_back";
-      }
-      if (first.includes("knee") || first.includes("모임") || first.includes("무릎") || first.includes("collapse")) {
-        return "bad_knee";
-      }
-      if (first.includes("butt") || first.includes("wink") || first.includes("벗윙크")) {
-        return "bad_buttwink";
-      }
-
-      return first;
+      const base = String(fileName || "").replace(/\.[^/.]+$/, "").trim();
+      return canonicalizeLabel(base);
     }
 
     function escapeHtml(str) {
@@ -309,7 +260,7 @@
     }
 
     function buildConfusionMatrix(actualLabels, predictedLabels) {
-      const unique = [...new Set(actualLabels.concat(predictedLabels))].sort();
+      const unique = CLASS_NAMES;
       const indexMap = {};
       unique.forEach((label, idx) => indexMap[label] = idx);
 
@@ -524,6 +475,9 @@
         const previewUrl = URL.createObjectURL(file);
 
         try {
+          if (!CLASS_NAMES.includes(actual)) {
+            throw new Error("파일명에 옆모습, 정면, 허리말림, 무릎모임, 벗윙크 중 해당 자세 유형을 넣어 주세요.");
+          }
           const img = new Image();
           img.src = previewUrl;
           await img.decode();
@@ -549,6 +503,9 @@
           const best = predList.reduce((a, b) => a.probability > b.probability ? a : b, { probability: 0 });
           const predictedLabel = canonicalizeLabel(best.className || "unknown");
           const confidence = Number(best.probability || 0);
+          if (!CLASS_NAMES.includes(predictedLabel)) {
+            throw new Error("모델에 5개 자세 유형으로 변환할 수 없는 클래스가 있습니다: " + String(best.className));
+          }
 
           actualLabels.push(actual);
           predictions.push(predictedLabel);
@@ -588,7 +545,7 @@
       const matrixData = buildConfusionMatrix(actualLabels, predictions);
       renderConfusionMatrix(matrixData);
 
-      const classes = [...new Set(actualLabels.concat(predictions))].sort();
+      const classes = CLASS_NAMES;
       const classStats = calcAccuracyByClass(actualLabels, predictions, classes);
       renderAccuracyByClass(classStats);
 
